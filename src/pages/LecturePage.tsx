@@ -5,7 +5,11 @@ import { BilibiliEmbed } from '../components/BilibiliEmbed';
 import { DialogueViewer } from '../components/DialogueViewer';
 import { getLecture } from '../data/lectures';
 import type { PresentationMode } from '../types';
-import { findLectureContext } from '../utils/lectureContext';
+import {
+  findAdjacentLectures,
+  findLectureContext,
+  formatLectureLabel,
+} from '../utils/lectureContext';
 import { formatOriginalForDisplay } from '../utils/formatOriginal';
 
 function resolveInitialMode(
@@ -48,6 +52,9 @@ export function LecturePage() {
   const activeMode =
     mode === 'bilibili' && !hasBilibili ? 'original' : mode;
   const originalText = formatOriginalForDisplay(lecture.original ?? lecture.body);
+  const { prev: prevLecture, next: nextLecture } = findAdjacentLectures(lecture.id);
+  const viewQuery =
+    activeMode !== 'original' ? `?view=${activeMode}` : '';
 
   const modes: { id: PresentationMode; label: string; show: boolean }[] = [
     { id: 'original', label: '原文', show: true },
@@ -154,7 +161,36 @@ export function LecturePage() {
         )}
       </div>
 
-      <nav className="lecture-footer-nav">
+      <nav className="lecture-adjacent-nav" aria-label="连续阅读">
+        {prevLecture ? (
+          <Link
+            to={`/lectures/${prevLecture.id}${viewQuery}`}
+            className="lecture-nav-prev"
+          >
+            <span className="lecture-nav-dir">上一讲</span>
+            <span className="lecture-nav-title">
+              {formatLectureLabel(prevLecture.number, prevLecture.title)}
+            </span>
+          </Link>
+        ) : (
+          <span className="lecture-nav-placeholder" />
+        )}
+        {nextLecture ? (
+          <Link
+            to={`/lectures/${nextLecture.id}${viewQuery}`}
+            className="lecture-nav-next"
+          >
+            <span className="lecture-nav-dir">下一讲</span>
+            <span className="lecture-nav-title">
+              {formatLectureLabel(nextLecture.number, nextLecture.title)}
+            </span>
+          </Link>
+        ) : (
+          <span className="lecture-nav-placeholder" />
+        )}
+      </nav>
+
+      <nav className="lecture-footer-nav" aria-label="目录">
         <Link to={`/chapters/${ctx.chapterId}`}>← 返回本章目录</Link>
         <Link to="/">全书目录</Link>
       </nav>
