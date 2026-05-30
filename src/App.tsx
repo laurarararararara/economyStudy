@@ -23,7 +23,7 @@ const LEGACY_STORY_ROUTES: [string, string][] = [
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || undefined}>
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />

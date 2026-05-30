@@ -26,6 +26,15 @@ npm run build
 npm run preview
 ```
 
+## 在线访问（GitHub Pages）
+
+公开地址：**https://laurarararararara.github.io/economyStudy/**
+
+1. 打开仓库 [Settings → Pages](https://github.com/laurarararararara/economyStudy/settings/pages)
+2. **Build and deployment → Source** 选 **GitHub Actions**（不要选 “Deploy from a branch / main / root”，那样只会发布源码，网站无法运行）
+3. 推送 `main` 后会自动运行 `.github/workflows/deploy-pages.yml`，约 1–2 分钟部署完成
+4. Pages 设置页顶部会出现绿色提示 “Your site is live at …”
+
 ## 项目结构
 
 ```

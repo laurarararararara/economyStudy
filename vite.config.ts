@@ -32,6 +32,10 @@ const legacyStoryRedirects: Plugin = {
   },
 };
 
+/** GitHub Pages 项目站路径：https://laurarararararara.github.io/economyStudy/ */
+const repoBase = '/economyStudy/';
+
 export default defineConfig({
+  base: process.env.GITHUB_PAGES === 'true' ? repoBase : '/',
   plugins: [react(), legacyStoryRedirects],
 });
