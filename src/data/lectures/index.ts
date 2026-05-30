@@ -1,6 +1,6 @@
 import type { LectureContent } from '../../types';
 import { buildOriginalText } from '../../utils/originalText';
-import { ch1Originals } from './ch1-originals';
+import pdfOriginals from './pdf-originals.json';
 import { ch1Lectures } from './ch1';
 import { ch2Lectures } from './ch2';
 import { ch3Lectures } from './ch3';
@@ -28,9 +28,10 @@ const allLectures: LectureContent[] = [
 
 const mergedLectures = allLectures.map((l) => {
   const base = storyOverrides[l.id] ?? l;
+  const pdfText = (pdfOriginals as Record<string, string>)[base.id];
   const original =
     base.original?.trim() ||
-    ch1Originals[base.id] ||
+    pdfText?.trim() ||
     buildOriginalText(base.title, base.body, base.takeaway, base.keyPoints);
   return { ...base, original };
 });

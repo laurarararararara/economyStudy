@@ -57,15 +57,17 @@ src/
   components/           # 布局、对话阅读、B 站嵌入
 ```
 
-## 补充书中原文
+## 从 PDF 导入书中原文
 
-讲次数据里可为某一讲单独设置 `original` 字段；未设置时「原文」页会显示该讲的 `body` 正文。在 `src/data/lectures/ch*.ts` 的 `qa()` / `mk()` 中增加最后一个参数即可，例如：
+将《薛兆丰经济学讲义》PDF 放在 `~/Downloads/薛兆丰经济学讲义.pdf`（或修改 `scripts/extract-pdf-originals.py` 中的路径），然后：
 
-```ts
-qa('001', '战俘营里的经济组织', body, takeaway, keyPoints, exchanges, undefined, '书中原文段落……'),
+```bash
+npm run extract:pdf
 ```
 
-批量重生成 ch2–ch10：`node scripts/gen-lectures.mjs`
+会生成 `src/data/lectures/pdf-originals.json`，网站「原文」标签将显示电子书正文。仅供个人学习，请勿公开传播全书内容。
+
+批量重生成 ch2–ch10 通俗解读：`node scripts/gen-lectures.mjs`
 
 ## 说明
 
