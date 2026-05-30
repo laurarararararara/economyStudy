@@ -495,11 +495,12 @@
   border-bottom: 1px solid var(--border);
 }
 
-.original-panel p {
-  margin-bottom: 1.1rem;
-  line-height: 1.85;
-  font-size: 1.02rem;
+.original-prose p {
+  margin-bottom: 1rem;
+  line-height: 1.9;
+  font-size: 1.05rem;
   color: var(--ink);
+  white-space: pre-wrap;
 }
 
 .text-panel h2 {

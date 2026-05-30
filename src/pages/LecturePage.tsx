@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { BilibiliEmbed } from '../components/BilibiliEmbed';
@@ -26,6 +26,14 @@ export function LecturePage() {
   const hasBilibili = Boolean(lecture?.bilibili);
   const initialMode = resolveInitialMode(searchParams.get('view'), hasBilibili);
   const [mode, setMode] = useState<PresentationMode>(initialMode);
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [lectureId]);
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [mode]);
 
   if (!lecture || !ctx) {
     return (
@@ -97,9 +105,11 @@ export function LecturePage() {
             <p className="panel-intro original-source">
               摘自《薛兆丰经济学讲义》· 第 {ctx.chapterNumber} 章「{ctx.chapterTitle}」
             </p>
-            {originalText.split('\n\n').map((para, i) => (
-              <p key={i}>{para}</p>
-            ))}
+            <div className="original-prose">
+              {originalText.split('\n\n').map((block, i) => (
+                <p key={i}>{block}</p>
+              ))}
+            </div>
           </section>
         )}
 

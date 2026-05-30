@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { ScrollToTop } from './components/ScrollToTop';
 import { ChapterPage } from './pages/ChapterPage';
 import { HomePage } from './pages/HomePage';
 import { LecturePage } from './pages/LecturePage';
@@ -24,6 +25,7 @@ const LEGACY_STORY_ROUTES: [string, string][] = [
 function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || undefined}>
+      <ScrollToTop />
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />
