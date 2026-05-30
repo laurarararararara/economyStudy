@@ -32,15 +32,10 @@ const legacyStoryRedirects: Plugin = {
   },
 };
 
-/**
- * GitHub Pages：
- * - 自定义域名（如 xiaotu.com）→ base 为 /
- * - 无自定义域名时可用 GITHUB_PAGES_BASE=/economyStudy/
- */
+/** GitHub Pages 项目站：https://laurarararararara.github.io/economyStudy/ */
+const GITHUB_PAGES_BASE = '/economyStudy/';
+
 export default defineConfig({
-  base:
-    process.env.GITHUB_PAGES === 'true'
-      ? process.env.GITHUB_PAGES_BASE || '/'
-      : '/',
+  base: process.env.GITHUB_PAGES === 'true' ? GITHUB_PAGES_BASE : '/',
   plugins: [react(), legacyStoryRedirects],
 });

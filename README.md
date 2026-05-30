@@ -28,24 +28,11 @@ npm run preview
 
 ## 在线访问（GitHub Pages）
 
-公开地址（自定义域名）：**https://xiaotu.com/**  
-备用：**https://laurarararararara.github.io/economyStudy/**（需在构建时设置 `GITHUB_PAGES_BASE=/economyStudy/`）
+公开地址：**https://laurarararararara.github.io/economyStudy/**
 
 1. [Settings → Pages](https://github.com/laurarararararara/economyStudy/settings/pages) → Source 选 **GitHub Actions**
-2. 自定义域名填 `xiaotu.com` 后，到**域名注册商**配置 DNS（见下）
-3. DNS 生效且 Enforce HTTPS 可用后，即可访问
-
-### 自定义域名 DNS（在阿里云/腾讯云/Cloudflare 等）
-
-| 类型 | 主机记录 | 值 |
-|------|----------|-----|
-| A | @ | `185.199.108.153` |
-| A | @ | `185.199.109.153` |
-| A | @ | `185.199.110.153` |
-| A | @ | `185.199.111.153` |
-| CNAME | www | `laurarararararara.github.io` |
-
-保存后等待 10 分钟～48 小时解析。在 Pages 设置里应出现 **DNS check successful**。
+2. 推送 `main` 后等待 Actions 部署完成（约 1–2 分钟）
+3. 在 Pages 设置页确认站点地址为上述链接
 
 ## 项目结构
 
