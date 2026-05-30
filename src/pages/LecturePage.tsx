@@ -6,6 +6,7 @@ import { DialogueViewer } from '../components/DialogueViewer';
 import { getLecture } from '../data/lectures';
 import type { PresentationMode } from '../types';
 import { findLectureContext } from '../utils/lectureContext';
+import { formatOriginalForDisplay } from '../utils/formatOriginal';
 
 function resolveInitialMode(
   param: string | null,
@@ -46,7 +47,7 @@ export function LecturePage() {
 
   const activeMode =
     mode === 'bilibili' && !hasBilibili ? 'original' : mode;
-  const originalText = lecture.original ?? lecture.body;
+  const originalText = formatOriginalForDisplay(lecture.original ?? lecture.body);
 
   const modes: { id: PresentationMode; label: string; show: boolean }[] = [
     { id: 'original', label: '原文', show: true },

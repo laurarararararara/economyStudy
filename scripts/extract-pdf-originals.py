@@ -14,6 +14,11 @@ PDF = Path("/Users/tiaotiao/Downloads/薛兆丰经济学讲义.pdf")
 BOOK_TS = ROOT / "src/data/book.ts"
 OUT = ROOT / "src/data/lectures/pdf-originals.json"
 
+# 行首视为「接上一行」而非新段
+CONTINUATION_RE = re.compile(
+    r"^([的呢吗吧啊呀成也与及而的在了的]|[\d~\-]|[^\u4e00-\u9fff《「“（—])"
+)
+
 
 def parse_lectures() -> list[tuple[str, int, str]]:
     text = BOOK_TS.read_text(encoding="utf-8")
@@ -29,7 +34,6 @@ def extract_pdf_text() -> str:
 
 
 def find_lecture_markers(full: str, lectures: list[tuple[str, int, str]]) -> list[tuple[int, str, str]]:
-    """按「第 NNN 讲」顺序定位各讲起始位置"""
     found: list[tuple[int, str, str]] = []
     cursor = 0
     for lid, num, title in lectures:
@@ -62,15 +66,64 @@ def strip_lecture_header(raw: str, title: str) -> str:
     return raw
 
 
-def lines_to_paragraphs(lines: list[str]) -> list[str]:
-    """PDF 按行断句，合并为小标题 + 正文段落"""
-    paras: list[str] = []
-    buf: list[str] = []
+def ends_sentence(s: str) -> bool:
+    s = s.rstrip()
+    if not s:
+        return True
+    return s[-1] in "。！？；…" or s.endswith(("」", "』", "）", "”", "’"))
 
-    def flush() -> None:
-        if buf:
-            paras.append("".join(buf))
-            buf.clear()
+
+def opens_fragment(s: str) -> bool:
+    """该行像是上一句被 PDF 截断的续行"""
+    if not s:
+        return False
+    if len(s) <= 10:
+        return True
+    if CONTINUATION_RE.match(s):
+        return True
+    if s[0] in "，、；：）":
+        return True
+    return False
+
+
+def is_section_heading(s: str) -> bool:
+    """独立小标题（另起一段）"""
+    if len(s) > 32:
+        return False
+    if "。" in s or "，" in s:
+        return False
+    if opens_fragment(s):
+        return False
+    if len(s) <= 5:
+        return False
+    if re.match(r"^[《「“（—\d\"\"''—\-]", s):
+        return False
+    if re.search(r"[a-zA-Z]{4}", s):
+        return False
+    han = len(re.findall(r"[\u4e00-\u9fff]", s))
+    return han >= 4
+
+
+def should_merge_into_buffer(buf: str, line: str) -> bool:
+    if not buf:
+        return False
+    if not ends_sentence(buf):
+        return True
+    if opens_fragment(line):
+        return True
+    if buf.endswith(("（", "《", "「", "“", "——", "、", "：", "说", "道")):
+        return True
+    if line.startswith(("）", "」", "』", "”", "’", "，", "。")) and len(line) < 20:
+        return True
+    # 单独标点或极短英文片段
+    if len(line) <= 3 or re.fullmatch(r"[\d\W]+", line):
+        return True
+    return False
+
+
+def lines_to_paragraphs(lines: list[str]) -> list[str]:
+    paras: list[str] = []
+    buf = ""
 
     for line in lines:
         s = line.strip()
@@ -79,20 +132,83 @@ def lines_to_paragraphs(lines: list[str]) -> list[str]:
         compact = re.sub(r"\s+", "", s)
         if compact in ("第", "讲", "第讲") or re.fullmatch(r"第\d*讲", compact):
             continue
-        is_heading = (
-            len(s) <= 24
-            and "。" not in s
-            and "，" not in s
-            and not s.endswith("）")
-            and not re.search(r"[a-zA-Z]{4}", s)
-        )
-        if is_heading and buf:
-            flush()
-            paras.append(s)
+
+        if not buf:
+            buf = s
+            continue
+
+        # 小标题始终另起一段（避免「有人的地方就有交易」贴在上一段末尾）
+        if is_section_heading(s):
+            paras.append(buf)
+            buf = s
+            continue
+
+        if should_merge_into_buffer(buf, s):
+            buf += s
+            continue
+
+        if len(s) <= 16 and not is_section_heading(s):
+            buf += s
+            continue
+
+        paras.append(buf)
+        buf = s
+
+    if buf:
+        paras.append(buf)
+
+    return merge_orphan_paras(paras)
+
+
+# 句号后紧贴出现的小标题（PDF 未换行）；限制长度避免吞掉正文
+EMBEDDED_TITLE_RE = re.compile(
+    r"([。！？])("
+    r"[\u4e00-\u9fff]{2,14}交易|"
+    r"[\u4e00-\u9fff]{3,16}(?:问题|原理|组织|现象|故事|定律|法则)"
+    r")(?=[\u4e00-\u9fff])"
+)
+
+
+def split_embedded_titles(para: str) -> list[str]:
+    if not EMBEDDED_TITLE_RE.search(para):
+        parts = [para]
+    else:
+        parts = [p.strip() for p in EMBEDDED_TITLE_RE.sub(r"\1\n\2", para).split("\n") if p.strip()]
+    result: list[str] = []
+    heading_tail = re.compile(
+        r"^([\u4e00-\u9fff]{4,20}(?:交易|问题|原理|组织|定律|法则|现象|故事|说：))(?=[\u4e00-\u9fff]{2,})"
+    )
+    for p in parts:
+        m = heading_tail.match(p)
+        if m and len(p) > len(m.group(1)) + 8:
+            result.append(m.group(1))
+            result.append(p[m.end() :])
         else:
-            buf.append(s)
-    flush()
-    return paras
+            result.append(p)
+    return result
+
+
+def merge_orphan_paras(paras: list[str]) -> list[str]:
+    if not paras:
+        return paras
+    out: list[str] = [paras[0]]
+    for p in paras[1:]:
+        prev = out[-1]
+        if opens_fragment(p) or (len(p) <= 20 and not is_section_heading(p) and not ends_sentence(prev)):
+            out[-1] = prev + p
+        else:
+            out.append(p)
+    return out
+
+
+def normalize_quotes(text: str) -> str:
+    """合并被拆开的引号与破折号"""
+    text = re.sub(r"\n+", "", text)
+    text = re.sub(r"“\s*”", "", text)
+    text = re.sub(r"“\s+", "“", text)
+    text = re.sub(r"\s+”", "”", text)
+    text = re.sub(r"——\s*——", "——", text)
+    return text
 
 
 def clean_original(raw: str, title: str) -> str:
@@ -117,6 +233,11 @@ def clean_original(raw: str, title: str) -> str:
         kept.append(s)
 
     paras = lines_to_paragraphs(kept)
+    expanded: list[str] = []
+    for p in paras:
+        expanded.extend(split_embedded_titles(p))
+    paras = [normalize_quotes(p) for p in expanded if p.strip()]
+    paras = merge_orphan_paras(paras)
     if not paras:
         return ""
     return "\n\n".join(f"　　{p}" for p in paras)
@@ -148,7 +269,7 @@ def main() -> int:
     missing = [lid for lid, _, _ in lectures if lid not in originals]
     if missing:
         print(f"Missing ({len(missing)}): {', '.join(missing)}", file=sys.stderr)
-    return 0 if len(missing) <= 2 else 0
+    return 0
 
 
 if __name__ == "__main__":
